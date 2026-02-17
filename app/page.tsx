@@ -3,7 +3,7 @@ import { ThemeSwitcher } from "@/components/theme-switcher";
 import { hasEnvVars } from "@/lib/utils";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Bookmark, Rocket, Smartphone, Globe } from "lucide-react";
+import { Bookmark, Rocket, Sparkles, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
@@ -44,11 +44,6 @@ export default function Home() {
                     Get Started <Rocket className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Link href="https://github.com" target="_blank">
-                  <Button variant="outline" size="lg" className="gap-2">
-                    View on GitHub <Globe className="h-4 w-4" />
-                  </Button>
-                </Link>
               </div>
             </div>
           </section>
@@ -65,11 +60,11 @@ export default function Home() {
             </div>
             <div className="flex flex-col items-center text-center gap-2 p-6 rounded-lg border bg-card text-card-foreground shadow-sm">
               <div className="p-3 rounded-full bg-primary/10 mb-4">
-                <Smartphone className="h-6 w-6 text-primary" />
+                <Sparkles className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="text-xl font-bold">Mobile First</h3>
+              <h3 className="text-xl font-bold">AI Powered</h3>
               <p className="text-muted-foreground">
-                Designed to look and work perfectly on phones, tablets, and desktops.
+                Automatically categorizes and tags your bookmarks for easy retrieval.
               </p>
             </div>
             <div className="flex flex-col items-center text-center gap-2 p-6 rounded-lg border bg-card text-card-foreground shadow-sm">
@@ -86,7 +81,7 @@ export default function Home() {
 
         <footer className="w-full border-t py-8 px-4">
           <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-            <p>© {new Date().getFullYear()} Smart Bookmark App. All rights reserved.</p>
+            <p>© 2026 Smart Bookmark App. All rights reserved.</p>
             <p className="flex items-center gap-2">
               Built with Next.js and Supabase
             </p>
