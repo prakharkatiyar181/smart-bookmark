@@ -15,8 +15,10 @@ export async function GET(request: Request) {
             // But for simple cases, redirecting to origin + next is sufficient.
             return NextResponse.redirect(`${origin}${next}`);
         }
+
+        return NextResponse.redirect(`${origin}/auth/auth-code-error?error=${encodeURIComponent(error.message)}`);
     }
 
     // return the user to an error page with instructions
-    return NextResponse.redirect(`${origin}/auth/auth-code-error`);
+    return NextResponse.redirect(`${origin}/auth/auth-code-error?error=MissingCode`);
 }
