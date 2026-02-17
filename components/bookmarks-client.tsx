@@ -23,7 +23,7 @@ export default function BookmarksClient({ user }: { user: User }) {
     const [url, setUrl] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [isInitialLoading, setIsInitialLoading] = useState(true);
-    const supabase = createClient();
+    const [supabase] = useState(() => createClient());
 
     useEffect(() => {
         // Initial fetch
@@ -43,24 +43,33 @@ export default function BookmarksClient({ user }: { user: User }) {
 
         // Realtime subscription
         const channel = supabase
-            .channel("realtime bookmarks")
+            .channel(`realtime-bookmarks-${user.id}`)
             .on(
                 "postgres_changes",
                 {
                     event: "*",
                     schema: "public",
                     table: "bookmarks",
-                    filter: `user_id=eq.${user.id}`,
                 },
                 (payload) => {
+                    // console.log("Realtime payload:", payload);
                     if (payload.eventType === "INSERT") {
-                        setBookmarks((prev) => [payload.new as Bookmark, ...prev]);
+                        const newBookmark = payload.new as Bookmark;
+                        setBookmarks((prev) => {
+                            // Prevent duplicates
+                            if (prev.some(b => b.id === newBookmark.id)) return prev;
+                            return [newBookmark, ...prev];
+                        });
                     } else if (payload.eventType === "DELETE") {
                         setBookmarks((prev) => prev.filter((b) => b.id !== payload.old.id));
                     }
                 }
             )
-            .subscribe();
+            .subscribe((status) => {
+                if (status !== 'SUBSCRIBED') {
+                    console.log('Realtime subscription status:', status);
+                }
+            });
 
         return () => {
             supabase.removeChannel(channel);
@@ -75,19 +84,33 @@ export default function BookmarksClient({ user }: { user: User }) {
         // Ensure URL has protocol
         const formattedUrl = url.startsWith('http') ? url : `https://${url}`;
 
-        const { error } = await supabase.from("bookmarks").insert([
-            { title, url: formattedUrl, user_id: user.id },
-        ]);
+        // Optimistic update impossible without a fake ID if we want to support DELETE immediately.
+        // So we will wait for server response.
 
-        if (!error) {
+        const { data, error } = await supabase.from("bookmarks").insert([
+            { title, url: formattedUrl, user_id: user.id },
+        ]).select().single();
+
+        if (data) {
             setTitle("");
             setUrl("");
+            // Update local state immediately after success
+            setBookmarks(prev => [data, ...prev]);
+            // Note: Realtime listener will also fire an INSERT event.
+            // We handled deduplication in the listener.
         }
         setIsLoading(false);
     };
 
     const deleteBookmark = async (id: string) => {
-        await supabase.from("bookmarks").delete().eq("id", id);
+        // Optimistic update
+        setBookmarks((prev) => prev.filter((b) => b.id !== id));
+
+        const { error } = await supabase.from("bookmarks").delete().eq("id", id);
+        if (error) {
+            console.error("Error deleting bookmark:", error);
+            // Revert optimization if error (optional, but good practice would be to re-fetch or re-add)
+        }
     };
 
     return (
