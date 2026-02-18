@@ -17,6 +17,18 @@
 </p>
 <br/>
 
+## Challenges Faced During Development
+
+One of the main challenges I encountered was deploying the application to Vercel. I faced an `Invalid API key` error during the login process, which was confusing because everything worked perfectly in my local environment.
+
+**The Issue:**
+The Supabase integration on Vercel or manual environment variable setup often defaults to `NEXT_PUBLIC_SUPABASE_ANON_KEY`, whereas my local development and some documentation referred to `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. This mismatch caused the authentication client to fail silently or throw invalid key errors on the production build.
+
+**The Solution:**
+I updated the codebase to robustly check for both key names (`ANON_KEY` and `PUBLISHABLE_KEY`) to ensure compatibility regardless of how the environment variables are named in the deployment pipeline. 
+
+If you fork this repo and deploy, make sure to add your Supabase URL and Anon Key in your Vercel Project Settings to avoid this pitfall!
+
 ## Features
 
 - Works across the entire [Next.js](https://nextjs.org) stack
