@@ -42,37 +42,48 @@ export default function BookmarksClient({ user }: { user: User }) {
         fetchBookmarks();
 
         // Realtime subscription
-        const channel = supabase
-            .channel(`realtime-bookmarks-${user.id}`)
-            .on(
-                "postgres_changes",
-                {
-                    event: "*",
-                    schema: "public",
-                    table: "bookmarks",
-                },
-                (payload) => {
-                    // console.log("Realtime payload:", payload);
-                    if (payload.eventType === "INSERT") {
-                        const newBookmark = payload.new as Bookmark;
-                        setBookmarks((prev) => {
-                            // Prevent duplicates
-                            if (prev.some(b => b.id === newBookmark.id)) return prev;
-                            return [newBookmark, ...prev];
-                        });
-                    } else if (payload.eventType === "DELETE") {
-                        setBookmarks((prev) => prev.filter((b) => b.id !== payload.old.id));
+        let channel: ReturnType<typeof supabase.channel> | null = null;
+
+        const setupRealtime = async () => {
+            // Ensure we have a valid session before subscribing
+            const { data: { session } } = await supabase.auth.getSession();
+
+            if (!session) return;
+
+            channel = supabase
+                .channel(`realtime-bookmarks-${user.id}`)
+                .on(
+                    "postgres_changes",
+                    {
+                        event: "*",
+                        schema: "public",
+                        table: "bookmarks",
+                    },
+                    (payload) => {
+                        // console.log("Realtime payload:", payload);
+                        if (payload.eventType === "INSERT") {
+                            const newBookmark = payload.new as Bookmark;
+                            setBookmarks((prev) => {
+                                // Prevent duplicates
+                                if (prev.some(b => b.id === newBookmark.id)) return prev;
+                                return [newBookmark, ...prev];
+                            });
+                        } else if (payload.eventType === "DELETE") {
+                            setBookmarks((prev) => prev.filter((b) => b.id !== payload.old.id));
+                        }
                     }
-                }
-            )
-            .subscribe((status) => {
-                if (status !== 'SUBSCRIBED') {
-                    console.log('Realtime subscription status:', status);
-                }
-            });
+                )
+                .subscribe((status) => {
+                    if (status !== 'SUBSCRIBED') {
+                        console.log('Realtime subscription status:', status);
+                    }
+                });
+        };
+
+        setupRealtime();
 
         return () => {
-            supabase.removeChannel(channel);
+            if (channel) supabase.removeChannel(channel);
         };
     }, [supabase, user.id]);
 
