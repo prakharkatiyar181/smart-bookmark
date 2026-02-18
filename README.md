@@ -29,6 +29,10 @@ I updated the codebase to robustly check for both key names (`ANON_KEY` and `PUB
 
 If you fork this repo and deploy, make sure to add your Supabase URL and Anon Key in your Vercel Project Settings to avoid this pitfall!
 
+Another interesting challenge was **Real-time Updates on Direct Visits**.
+When a user refreshed the protected page directly, the Realtime subscription would sometimes fail to connect properly or would interpret the user as anonymous, despite the auth cookie being present. This happened because the client-side WebSocket connection was attempting to establish itself before the Supabase client had fully hydrated the session from the cookie storage.
+**The Fix:** I wrapped the subscription logic in a `setupRealtime` function that awaits `supabase.auth.getSession()` to ensure a valid session token exists before opening the WebSocket connection. This simple check eliminated the race condition.
+
 ## Features
 
 - Works across the entire [Next.js](https://nextjs.org) stack
